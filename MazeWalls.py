@@ -1,4 +1,5 @@
 import pygame
+from SpriteSheet_Functions import SpriteSheet
 
 pygame.init()
 
@@ -8,12 +9,18 @@ WHITE = [255,255,255]
 BLUE = [0,0,255]
 RED = [255,0,0]
 GREEN = [0, 255,0]
+PLAYER_DIMENSION = 20
+
 
 DEPLACEMENT = 5
 
 screen = pygame.display.set_mode(SIZE)
 pygame.display.set_caption("mazeWalls")
-#all_sprite_list = pygame.sprite.Group()
+SPRITE_SHEET_FILE = "Data/player.png"
+SPRITE_SHEET = SpriteSheet(SPRITE_SHEET_FILE)
+#sprite_tight = (4,0,54,64)
+PLAYER_COORD = [(0,0,64,64), (64,0, 64,64), (0,64,64,64), (64,64,64,64),(0,128,64,64), (64,128,64,64), (0,192,64,64), (64,192,64,64)]
+
 
 clock = pygame.time.Clock()
 
@@ -36,16 +43,22 @@ class Wall(pygame.sprite.Sprite):
 
 class Player(pygame.sprite.Sprite):
 
-	def __init__(self, x, y, width, height):
+	def __init__(self, x, y):
 		super(Player, self).__init__()
-		self.image = pygame.Surface([width, height])
-		self.image.fill(WHITE)
+		self.images = self.setImages()
+		self.image = self.setImage()
 		self.rect = self.image.get_rect()
+		self.orient = 'up'
 		self.rect.x = x
 		self.rect.y = y
-		self.width = width
-		self.height = height
 		self.direction = None
+
+	def setImages(self):
+		images = SPRITE_SHEET.imgsat(PLAYER_COORD)
+		return images
+
+	def setImage(self):
+		return self.images[0]
 
 	def update(self):
 		pass
@@ -89,8 +102,13 @@ class App (object):
 
 	def __init__(self):
 		self.all_sprite_list = pygame.sprite.Group()
-		self.player = Player(200,200, 20,20)
+		self.player = Player(200,200)
+		#self.player2 = Player2((50,50), 'up')
+		#self.player = Player((startCell.px, startCell.py), 
+        #                     startCell['playerStart'], self.players)
+
 		self.all_sprite_list.add(self.player)
+		#self.all_sprite_list.add(self.player2)
 		#self.all_wall_list = pygame.sprite.Group()
 		self.roomArray = []
 		self.currentRoom = 0
@@ -150,6 +168,7 @@ class App (object):
 			elif keys[pygame.K_DOWN]:
 				self.player.move("DOWN")
 
+			#player exits room from left
 			if self.player.rect.x < 0:
 				print "out of range"
 				if self.currentRoom == 0:
@@ -158,6 +177,7 @@ class App (object):
 					self.currentRoom = self.currentRoom -1
 				self.player.rect.x = SIZE[0] - 20
 
+			#player exits room from right
 			if self.player.rect.x > SIZE[0]:
 				if self.currentRoom == len(self.roomArray) -1:
 					self.currentRoom = 0 
@@ -165,30 +185,25 @@ class App (object):
 					self.currentRoom = self.currentRoom + 1
 				self.player.rect.x = 20
 
-			#block_hit_list = pygame.sprite.spritecollide(self, walls, False)
-			#thisRoom = self.roomArray[self.currentRoom]
-			#block_hit_list = pygame.sprite.spritecollide (self.player, thisRoom.all_walls_in_room_list, False)
+			
 			block_hit_list = pygame.sprite.spritecollide (self.player, self.roomArray[self.currentRoom].all_walls_in_room_list, False)
 
 			for block in block_hit_list:
 				if self.player.direction == "LEFT":
 					self.player.rect.left = block.rect.right
-
-
-			#if pygame.sprite.spritecollide(self.player,self.roomArray[self.currentRoom].all_walls_in_room_list, False):
-			#	print "collision"
-
+				elif self.player.direction == "RIGHT":
+					self.player.rect.right = block.rect.left
+				elif self.player.direction == "UP":
+					self.player.rect.top = block.rect.bottom
+				else:
+					self.player.rect.bottom = block.rect.top
+	
 
 			self.all_sprite_list.draw(screen)
 
 			self.roomArray[self.currentRoom].all_walls_in_room_list.draw(screen)
 			pygame.display.update()
 			clock.tick(60)
-
-
-
-
-
 
 
 if __name__ == "__main__":
